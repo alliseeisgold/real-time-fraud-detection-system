@@ -11,6 +11,12 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    @ExceptionHandler(FraudAlertNotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ApiResponse<Void> handleFraudAlertNotFound(FraudAlertNotFoundException exception) {
+        return ApiResponse.failure("FRAUD_ALERT_NOT_FOUND", exception.getMessage());
+    }
+
     @ExceptionHandler(Exception.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public ApiResponse<Void> handleUnexpectedException(Exception exception) {
