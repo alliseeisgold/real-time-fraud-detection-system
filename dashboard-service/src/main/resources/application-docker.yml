@@ -1,0 +1,7 @@
+spring:
+  datasource:
+    url: jdbc:clickhouse://clickhouse:8123/dashboard_db
+    username: default
+    password: clickhouse
+  kafka:
+    bootstrap-servers: kafka:9092
