@@ -1,0 +1,705 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Fraud Detection Dashboard</title>
+    <style>
+        :root {
+            color-scheme: light;
+            --bg: #f7f8fa;
+            --surface: #ffffff;
+            --surface-strong: #f0f3f7;
+            --border: #d9dee7;
+            --text: #17202a;
+            --muted: #657080;
+            --accent: #0f766e;
+            --danger: #b42318;
+            --danger-bg: #fff1f0;
+            --success: #16803c;
+            --warning: #a15c07;
+            --shadow: 0 12px 32px rgba(28, 35, 45, 0.08);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-width: 320px;
+            background: var(--bg);
+            color: var(--text);
+            font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            letter-spacing: 0;
+        }
+
+        button,
+        input,
+        table {
+            font: inherit;
+        }
+
+        .shell {
+            min-height: 100vh;
+            display: grid;
+            grid-template-rows: auto 1fr;
+        }
+
+        .topbar {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            background: rgba(255, 255, 255, 0.94);
+            border-bottom: 1px solid var(--border);
+            backdrop-filter: blur(16px);
+        }
+
+        .topbar-inner {
+            width: min(1180px, calc(100% - 32px));
+            min-height: 72px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            min-width: 0;
+        }
+
+        .brand-mark {
+            width: 40px;
+            height: 40px;
+            display: grid;
+            place-items: center;
+            border-radius: 8px;
+            background: var(--surface-strong);
+            border: 1px solid var(--border);
+            color: var(--accent);
+            flex: 0 0 auto;
+        }
+
+        .brand h1 {
+            margin: 0;
+            font-size: 18px;
+            line-height: 1.2;
+            font-weight: 700;
+        }
+
+        .brand p {
+            margin: 3px 0 0;
+            color: var(--muted);
+            font-size: 13px;
+            line-height: 1.3;
+        }
+
+        .status-pill {
+            min-width: 132px;
+            height: 36px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 0 12px;
+            border-radius: 999px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            color: var(--muted);
+            font-size: 13px;
+            white-space: nowrap;
+        }
+
+        .status-dot {
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+            background: var(--warning);
+        }
+
+        .status-pill.connected .status-dot {
+            background: var(--success);
+        }
+
+        .status-pill.disconnected .status-dot {
+            background: var(--danger);
+        }
+
+        main {
+            width: min(1180px, calc(100% - 32px));
+            margin: 28px auto 40px;
+        }
+
+        .metrics {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 14px;
+            margin-bottom: 18px;
+        }
+
+        .metric {
+            min-height: 118px;
+            padding: 18px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+        }
+
+        .metric span {
+            display: block;
+            color: var(--muted);
+            font-size: 13px;
+            line-height: 1.3;
+        }
+
+        .metric strong {
+            display: block;
+            margin-top: 14px;
+            font-size: clamp(26px, 4vw, 38px);
+            line-height: 1;
+            font-weight: 750;
+            overflow-wrap: anywhere;
+        }
+
+        .metric.danger strong {
+            color: var(--danger);
+        }
+
+        .content-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) 340px;
+            gap: 18px;
+            align-items: start;
+        }
+
+        .panel {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+
+        .panel-header {
+            min-height: 58px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            padding: 16px 18px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .panel-header h2 {
+            margin: 0;
+            font-size: 15px;
+            line-height: 1.2;
+            font-weight: 700;
+        }
+
+        .panel-header span {
+            color: var(--muted);
+            font-size: 12px;
+            white-space: nowrap;
+        }
+
+        .table-wrap {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+        }
+
+        col.transaction-column {
+            width: 25%;
+        }
+
+        col.account-column {
+            width: 25%;
+        }
+
+        col.reason-column {
+            width: 28%;
+        }
+
+        col.risk-column {
+            width: 10%;
+        }
+
+        col.time-column {
+            width: 12%;
+        }
+
+        th,
+        td {
+            padding: 13px 18px;
+            border-bottom: 1px solid var(--border);
+            text-align: left;
+            vertical-align: middle;
+            font-size: 13px;
+        }
+
+        th {
+            color: var(--muted);
+            background: #fbfcfd;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        td {
+            color: var(--text);
+        }
+
+        tr:last-child td {
+            border-bottom: 0;
+        }
+
+        .mono {
+            font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+            font-size: 12px;
+            overflow-wrap: anywhere;
+        }
+
+        .risk {
+            display: inline-flex;
+            min-width: 44px;
+            height: 28px;
+            align-items: center;
+            justify-content: center;
+            border-radius: 999px;
+            background: var(--danger-bg);
+            color: var(--danger);
+            font-weight: 700;
+        }
+
+        .reason-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            max-width: 100%;
+            min-width: 0;
+        }
+
+        .reason-tag {
+            display: inline-flex;
+            max-width: 100%;
+            min-height: 26px;
+            align-items: center;
+            padding: 4px 8px;
+            border-radius: 999px;
+            background: var(--danger-bg);
+            color: var(--danger);
+            font-size: 11px;
+            font-weight: 750;
+            line-height: 1.2;
+            overflow-wrap: anywhere;
+            white-space: normal;
+        }
+
+        .empty {
+            padding: 34px 18px;
+            color: var(--muted);
+            text-align: center;
+            font-size: 14px;
+        }
+
+        .account-list {
+            list-style: none;
+            margin: 0;
+            padding: 6px 0;
+        }
+
+        .account-list li {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
+            gap: 12px;
+            align-items: center;
+            padding: 13px 18px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .account-list li:last-child {
+            border-bottom: 0;
+        }
+
+        .count-badge {
+            min-width: 38px;
+            height: 28px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 999px;
+            background: var(--surface-strong);
+            color: var(--text);
+            font-weight: 700;
+            font-size: 12px;
+        }
+
+        @media (max-width: 920px) {
+            .metrics {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .content-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .topbar-inner {
+                width: min(100% - 24px, 1180px);
+                min-height: 84px;
+                align-items: flex-start;
+                flex-direction: column;
+                justify-content: center;
+                gap: 10px;
+            }
+
+            main {
+                width: min(100% - 24px, 1180px);
+                margin-top: 18px;
+            }
+
+            .metrics {
+                grid-template-columns: 1fr;
+            }
+
+            .metric {
+                min-height: 96px;
+            }
+
+            th,
+            td {
+                padding: 12px;
+            }
+
+            col.transaction-column {
+                width: 30%;
+            }
+
+            col.account-column {
+                width: 30%;
+            }
+
+            col.reason-column {
+                width: 28%;
+            }
+
+            col.risk-column {
+                width: 12%;
+            }
+
+            .hide-sm {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="shell">
+    <header class="topbar">
+        <div class="topbar-inner">
+            <div class="brand">
+                <div class="brand-mark" aria-hidden="true">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                        <path d="M12 3l7 3v5c0 4.7-2.9 8.6-7 10-4.1-1.4-7-5.3-7-10V6l7-3z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+                        <path d="M9 12l2 2 4-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </div>
+                <div>
+                    <h1>Fraud Detection Dashboard</h1>
+                    <p>Real-time transaction risk monitoring</p>
+                </div>
+            </div>
+            <div id="connectionStatus" class="status-pill disconnected">
+                <span class="status-dot"></span>
+                <span id="connectionText">Disconnected</span>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <section class="metrics" aria-label="Dashboard metrics">
+            <article class="metric">
+                <span>Total Transactions</span>
+                <strong id="totalTransactions">0</strong>
+            </article>
+            <article class="metric danger">
+                <span>Fraud Alerts</span>
+                <strong id="fraudCount">0</strong>
+            </article>
+            <article class="metric">
+                <span>Verified Transactions</span>
+                <strong id="verifiedCount">0</strong>
+            </article>
+            <article class="metric">
+                <span>Fraud Rate</span>
+                <strong id="fraudRate">0.00%</strong>
+            </article>
+        </section>
+
+        <section class="content-grid">
+            <article class="panel">
+                <div class="panel-header">
+                    <h2>Recent Fraud Alerts</h2>
+                    <span id="lastUpdated">Waiting for data</span>
+                </div>
+                <div class="table-wrap">
+                    <table>
+                        <colgroup>
+                            <col class="transaction-column">
+                            <col class="account-column">
+                            <col class="reason-column">
+                            <col class="risk-column">
+                            <col class="time-column">
+                        </colgroup>
+                        <thead>
+                        <tr>
+                            <th>Transaction</th>
+                            <th>Account</th>
+                            <th>Reason</th>
+                            <th>Risk</th>
+                            <th class="hide-sm">Time</th>
+                        </tr>
+                        </thead>
+                        <tbody id="fraudRows">
+                        <tr>
+                            <td colspan="5" class="empty">No fraud alerts</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </article>
+
+            <aside class="panel">
+                <div class="panel-header">
+                    <h2>Top Fraud Accounts</h2>
+                    <span>Top 5</span>
+                </div>
+                <ul id="topFraudAccounts" class="account-list">
+                    <li class="empty">No accounts</li>
+                </ul>
+            </aside>
+        </section>
+    </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+<script>
+    const state = {
+        alerts: []
+    };
+
+    const elements = {
+        connectionStatus: document.getElementById('connectionStatus'),
+        connectionText: document.getElementById('connectionText'),
+        totalTransactions: document.getElementById('totalTransactions'),
+        fraudCount: document.getElementById('fraudCount'),
+        verifiedCount: document.getElementById('verifiedCount'),
+        fraudRate: document.getElementById('fraudRate'),
+        fraudRows: document.getElementById('fraudRows'),
+        topFraudAccounts: document.getElementById('topFraudAccounts'),
+        lastUpdated: document.getElementById('lastUpdated')
+    };
+
+    bootstrap();
+
+    async function bootstrap() {
+        await Promise.all([loadStats(), loadRecentFrauds()]);
+        connectWebSocket();
+    }
+
+    async function loadStats() {
+        const response = await fetch('/api/dashboard/stats');
+        const body = await response.json();
+        if (body.success) {
+            renderStats(body.data);
+        }
+    }
+
+    async function loadRecentFrauds() {
+        const response = await fetch('/api/dashboard/recent-frauds');
+        const body = await response.json();
+        if (body.success) {
+            state.alerts = body.data || [];
+            renderAlerts();
+        }
+    }
+
+    function connectWebSocket() {
+        const socket = new SockJS('/ws');
+        const stompClient = Stomp.over(socket);
+        stompClient.debug = null;
+
+        setConnectionState('Connecting', false);
+
+        stompClient.connect({}, () => {
+            setConnectionState('Connected', true);
+
+            stompClient.subscribe('/topic/dashboard-stats', message => {
+                renderStats(JSON.parse(message.body));
+            });
+
+            stompClient.subscribe('/topic/fraud-alerts', message => {
+                prependAlert(JSON.parse(message.body));
+            });
+        }, () => {
+            setConnectionState('Disconnected', false);
+            window.setTimeout(connectWebSocket, 3000);
+        });
+    }
+
+    function setConnectionState(text, connected) {
+        elements.connectionText.textContent = text;
+        elements.connectionStatus.classList.toggle('connected', connected);
+        elements.connectionStatus.classList.toggle('disconnected', !connected);
+    }
+
+    function renderStats(stats) {
+        elements.totalTransactions.textContent = formatNumber(stats.totalTransactions);
+        elements.fraudCount.textContent = formatNumber(stats.fraudCount);
+        elements.verifiedCount.textContent = formatNumber(stats.verifiedCount);
+        elements.fraudRate.textContent = formatPercent(stats.fraudRate);
+        renderTopAccounts(stats.topFraudAccounts || []);
+        updateTimestamp();
+    }
+
+    function renderTopAccounts(accounts) {
+        elements.topFraudAccounts.innerHTML = '';
+
+        if (accounts.length === 0) {
+            const empty = document.createElement('li');
+            empty.className = 'empty';
+            empty.textContent = 'No accounts';
+            elements.topFraudAccounts.appendChild(empty);
+            return;
+        }
+
+        accounts.forEach(account => {
+            const row = document.createElement('li');
+
+            const id = document.createElement('span');
+            id.className = 'mono';
+            id.textContent = account.accountId;
+
+            const count = document.createElement('span');
+            count.className = 'count-badge';
+            count.textContent = account.fraudCount;
+
+            row.append(id, count);
+            elements.topFraudAccounts.appendChild(row);
+        });
+    }
+
+    function prependAlert(alert) {
+        state.alerts = [alert, ...state.alerts]
+            .filter((item, index, items) => items.findIndex(candidate => candidate.transactionId === item.transactionId) === index)
+            .slice(0, 20);
+        renderAlerts();
+        updateTimestamp();
+    }
+
+    function renderAlerts() {
+        elements.fraudRows.innerHTML = '';
+
+        if (state.alerts.length === 0) {
+            const row = document.createElement('tr');
+            const cell = document.createElement('td');
+            cell.className = 'empty';
+            cell.colSpan = 5;
+            cell.textContent = 'No fraud alerts';
+            row.appendChild(cell);
+            elements.fraudRows.appendChild(row);
+            return;
+        }
+
+        state.alerts.forEach(alert => {
+            const row = document.createElement('tr');
+            row.append(
+                tableCell(alert.transactionId, 'mono'),
+                tableCell(alert.accountId, 'mono'),
+                reasonCell(alert.reason),
+                riskCell(alert.riskScore),
+                timeCell(alert.detectedAt)
+            );
+            elements.fraudRows.appendChild(row);
+        });
+    }
+
+    function tableCell(value, className) {
+        const cell = document.createElement('td');
+        if (className) {
+            cell.className = className;
+        }
+        cell.textContent = value || '-';
+        return cell;
+    }
+
+    function reasonCell(value) {
+        const cell = document.createElement('td');
+        const list = document.createElement('div');
+        list.className = 'reason-list';
+
+        parseReasons(value).forEach(reason => {
+            const tag = document.createElement('span');
+            tag.className = 'reason-tag';
+            tag.textContent = reason;
+            list.appendChild(tag);
+        });
+
+        cell.appendChild(list);
+        return cell;
+    }
+
+    function parseReasons(value) {
+        if (!value) {
+            return ['-'];
+        }
+
+        return String(value)
+            .replace(/^\[/, '')
+            .replace(/\]$/, '')
+            .split(/[,+]/)
+            .map(reason => reason.trim())
+            .filter(Boolean);
+    }
+
+    function riskCell(value) {
+        const cell = document.createElement('td');
+        const badge = document.createElement('span');
+        badge.className = 'risk';
+        badge.textContent = value ?? 0;
+        cell.appendChild(badge);
+        return cell;
+    }
+
+    function timeCell(value) {
+        const cell = document.createElement('td');
+        cell.className = 'hide-sm';
+        cell.textContent = value ? new Date(value).toLocaleTimeString() : '-';
+        return cell;
+    }
+
+    function updateTimestamp() {
+        elements.lastUpdated.textContent = `Updated ${new Date().toLocaleTimeString()}`;
+    }
+
+    function formatNumber(value) {
+        return new Intl.NumberFormat().format(value || 0);
+    }
+
+    function formatPercent(value) {
+        return `${((Number(value) || 0) * 100).toFixed(2)}%`;
+    }
+</script>
+</body>
+</html>
