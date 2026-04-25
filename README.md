@@ -1,5 +1,7 @@
 # Real-Time Fraud Detection System
 
+![Real-Time Fraud Detection System dashboard preview](docs/assets/dashboard-preview.png)
+
 I built this project to practice event-driven microservices in a realistic Spring Boot system.
 The main goal is to study Kafka as an inter-service event bus, understand asynchronous
 communication between services, and see how ClickHouse can be used in practice as an
