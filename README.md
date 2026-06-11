@@ -182,6 +182,15 @@ payment-service
 For local development, PostgreSQL and Kafka are infrastructure dependencies. Spring Boot services run on the host and connect to infrastructure through `localhost` ports.
 
 ## TODO
+- Add a result consumer in `payment-service` that listens to `transactions.verified` and `transactions.fraud` and updates transaction status from `PENDING` to `VERIFIED` or `FRAUD`.
+- Make `fraud-analyzer-service` processing idempotent across Kafka publish, local DB writes, and offset acknowledgement. Prefer an inbox/outbox flow or another atomic processing strategy.
+- Rework the high-frequency rule so it is deterministic and shared across service instances. Avoid relying on an in-memory `FrequencyTracker` updated asynchronously by a separate Kafka Streams topology.
+- Make the payment outbox publisher safe for multiple service instances by claiming rows with a lock or lease before publishing pending events.
+- Store known account countries as a set of `(account_id, country)` values instead of overwriting the last country, and decide whether fraud transactions should update the trusted country baseline.
+- Add retry/backoff and DLQ handling for notification consumers instead of acknowledging every exception.
+- Strengthen request validation: use `MerchantCategory` enum or add length constraints, return `400` for invalid UUID path variables, and handle database constraint violations cleanly.
+- Preserve full transaction details in dashboard fraud projections, not only transaction id, account id, reason, and risk score.
+- Add consumer idempotency tests for duplicate Kafka messages, analyzer retry tests, dashboard projection tests, and notification DLQ tests.
 - Add more integration tests with Testcontainers for Kafka, PostgreSQL, and ClickHouse.
 - Add observability: structured logs, correlation IDs, Micrometer metrics, and dashboards for Kafka lag and outbox retries.
 - Add stronger retry and backoff policies for Kafka publishing and consuming.
