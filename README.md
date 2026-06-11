@@ -180,3 +180,13 @@ payment-service
 ```
 
 For local development, PostgreSQL and Kafka are infrastructure dependencies. Spring Boot services run on the host and connect to infrastructure through `localhost` ports.
+
+## TODO
+- Add more integration tests with Testcontainers for Kafka, PostgreSQL, and ClickHouse.
+- Add observability: structured logs, correlation IDs, Micrometer metrics, and dashboards for Kafka lag and outbox retries.
+- Add stronger retry and backoff policies for Kafka publishing and consuming.
+- Add authentication and authorization for REST APIs and the dashboard.
+- Add a small admin endpoint or operational job to replay dead-letter messages after fixing bad data or code bugs.
+- Add reconciliation jobs that compare payment, fraud, notification, and dashboard projections.
+- Move hardcoded fraud thresholds into a versioned rules configuration model.
+- Add a deterministic development mode for timestamp-based rules such as `NIGHT_TIME`.
